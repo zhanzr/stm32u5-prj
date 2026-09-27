@@ -35,6 +35,22 @@ and the CMake helpers in `cmake/`.
 > out of the timed region and inflates the score (still passing the checks).
 > See `bare/dhry_160m/LTO_on_dhrystone.md`.
 
+## Analog supplies (ADC / DAC / COMP / OPAMP)
+
+Two things are easy to miss on this part — without them the ADC looks dead
+(its internal regulator never becomes ready, so `ADC_Enable()` times out and
+calibration hangs in `Error_Handler`):
+
+- **VDDA must be enabled** — `HAL_PWREx_EnableVddA()` in `HAL_MspInit()`
+  (`board/stm32u5xx_hal_msp.c`).
+- **The ADC kernel clock must actually run** — the ADC takes **HSI** (16 MHz,
+  async) as its clock, so `SystemClock_Config()` turns HSI on even though the
+  CPU runs from MSI→PLL.
+
+Also note the `stm32u5xx_ll_adc.h` factory calibration constants are **14-bit**
+while a project may run the ADC at 12 bits; use the official
+`__LL_ADC_CALC_*` macros instead of open-coding the conversion.
+
 ## Clock tree (160 MHz)
 
 ```

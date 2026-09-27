@@ -22,20 +22,36 @@ hard-float). It chases the three board LEDs and once a second samples the
   the calibration constants come from `stm32u5xx_ll_adc.h`.
 
   > Note: the U5 divides VBAT by **4** internally (the L4 divided by 3), so the
-  > VBAT reading is scaled by 4 — not 3.
+  > VBAT reading is scaled by 4 - not 3. The `stm32u5xx_ll_adc.h` calibration
+  > constants are also **14-bit** while this demo runs the ADC at 12 bits, so
+  > the official `__LL_ADC_CALC_*` helper macros are used to rescale; a naive
+  > 12-bit formula would report `Vdda ~13 V`.
 
-Example output (once per second):
+Example output (once per second, measured on hardware):
 
 ```
 ==== nucleo-u575 (STM32U575ZIT6) blink_hello @ 160 MHz ====
 SYSCLK = 160000000 Hz (160 MHz)
 FLASH_ACR latency = 4 (4 WS + ICACHE)
-ADC1: VREFINT=1492 code, temp=943 code, VBAT=1030 code
-     Vdda ~= 3317 mV, chip temp ~= 30 C, VBAT ~= 3333 mV
+ADC1: VREFINT=1493 code, temp=908 code, VBAT=1023 code
+     Vdda ~= 3300 mV, chip temp ~= 27 C, VBAT ~= 3296 mV
+ADC1: VREFINT=1492 code, temp=909 code, VBAT=1024 code
+     Vdda ~= 3303 mV, chip temp ~= 28 C, VBAT ~= 3300 mV
 ```
 
-Exact values depend on the supply and die temperature; on a NUCLEO board with
-no battery, `VBAT` is tied to `VDD`, so it reads ~3.3 V rather than 0.
+On a NUCLEO board with no battery, `VBAT` is tied to `VDD`, so it reads ~3.3 V
+rather than 0.
+
+## STM32U5 ADC notes
+
+Two things are easy to miss on this part and will make the ADC look broken:
+
+- **VDDA (analog supply) must be enabled** - `HAL_PWREx_EnableVddA()` in
+  `HAL_MspInit()` (see `../../board/stm32u5xx_hal_msp.c`). Without it the ADC's
+  internal regulator never becomes ready (`LDORDY` never sets), `ADC_Enable()`
+  times out and `HAL_ADCEx_Calibration_Start()` hangs in `Error_Handler`.
+- **HSI must be running** if it is selected as the ADC kernel clock. This board
+  runs the CPU from MSI→PLL, so `SystemClock_Config()` also turns HSI on.
 
 ## Build
 

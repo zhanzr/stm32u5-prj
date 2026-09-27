@@ -97,6 +97,14 @@ belongs there and is pulled in by the board-apply CMake function.
   not `printf` directly. Do not add a second retarget.
 - The U5 ICACHE is enabled in `Board_Init()` (1-way). Removing it makes flash
   execution at 160 MHz dramatically slower — keep it.
+- **The analog block needs two non-obvious things** (see `nucleo-u575/README.md`):
+  `HAL_PWREx_EnableVddA()` in `HAL_MspInit()` (else ADC `LDORDY`/`ADRDY` never
+  set and calibration hangs), and its **HSI** kernel clock actually running —
+  `SystemClock_Config()` enables HSI even though the CPU runs from MSI→PLL.
+  The LL ADC calibration constants are **14-bit**; use the
+  `__LL_ADC_CALC_*` macros rather than open-coding a 12-bit formula.
+- starm-clang needs the `st`-vendor triple (`--target=thumbv8m.main-st-none-eabihf`);
+  the plain `thumbv8m.main-none-eabihf` finds no multilib and loses the libc headers.
 - Do not add code comments beyond what's needed; the existing sources use
   sparse explanatory comments only where non-obvious (e.g. LTO/syscalls workaround).
 - There is no test suite in this repo; verification is by building + flashing

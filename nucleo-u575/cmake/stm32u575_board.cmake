@@ -32,9 +32,11 @@ set(STM32U5_CMSIS_CORE ${STM32U5_HAL_ROOT}/CMSIS/Include)
 function(stm32u575_apply_board TGT OPT)
     separate_arguments(OPT_LIST NATIVE_COMMAND "${OPT}")
 
-    # GCC-only warning switches; keep clang-based toolchains clean.
+    # GCC-only warning switches; keep clang-based toolchains clean. The
+    # clang toolchains need self-assign silenced too: ST's stm32u5xx_ll_adc.h
+    # has a macro that assigns a variable to itself.
     if(STM32_ARMCLANG OR STM32_STARM_CLANG)
-        set(_WARN_FLAGS -Wall -Wno-unused-command-line-argument)
+        set(_WARN_FLAGS -Wall -Wno-unused-command-line-argument -Wno-self-assign)
     else()
         set(_WARN_FLAGS
             -Wall
@@ -101,10 +103,12 @@ function(stm32u575_apply_board TGT OPT)
     # starm-clang links with LLD by default; use -Xlinker for linker flags.
     if(STM32_STARM_CLANG)
         set(_STARM_SYSROOT "${STARM_ROOT}/lib/clang-runtimes/newlib")
-        # The M33 hard-float multilib dir name varies between ST releases;
-        # pick whichever fpv5 hard-float variant is present.
+        # The Cortex-M33 hard-float multilib dir name varies between ST
+        # releases; pick whichever armv8m.main hard-float variant is present
+        # (prefer the plain unaligned one, matching our -mfpu=fpv5-sp-d16).
         file(GLOB _STARM_LIBDIRS
-            "${_STARM_SYSROOT}/arm-none-eabi/armv8m.main_hard_*fpv5*/lib")
+            "${_STARM_SYSROOT}/arm-none-eabi/armv8m.main_hard_fp_unaligned_size/lib"
+            "${_STARM_SYSROOT}/arm-none-eabi/armv8m.main_hard_fp_exn_rtti_unaligned_size/lib")
         list(GET _STARM_LIBDIRS 0 _STARM_LIBDIR)
         set(_LDFLAGS "-nostartfiles")
         set(_LDFLAGS "${_LDFLAGS} -Xlinker -T -Xlinker ${BOARD_LINKER_SCRIPT}")

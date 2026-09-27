@@ -10,31 +10,35 @@ three compilers.
 
 ## Results
 
-> **Not yet measured on this board.** Capture the console while the chip runs
-> the benchmark (it re-runs every ~45 s) and take the last complete
-> `Iterations/Sec` line. Fill in the table below from hardware runs.
+Measured on hardware at 160 MHz (hard-float): capture the console while the
+chip runs the benchmark (it re-runs every ~30 s), and take the last complete
+`Iterations/Sec` line.
 
 | Toolchain           | Flags                                          | iterations/s | Time (s) |
 | ------------------- | ---------------------------------------------- | ------------ | -------- |
-| GCC                 | `-Ofast -ffp-contract=fast -funroll-all-loops` | —            | —        |
-| GCC + LTO           | above `+ -flto`                                | —            | —        |
-| ARMCLANG (Keil AC6) | `-Ofast -ffp-contract=fast -funroll-all-loops` | —            | —        |
-| ARMCLANG (Keil AC6) | `-Omax -fno-lto`                               | —            | —        |
-| ST Arm clang        | `-Ofast -ffp-contract=fast`                    | —            | —        |
+| GCC 15.3.1          | `-Ofast -ffp-contract=fast -funroll-all-loops` | 504.39       | 19.83    |
+| GCC 15.3.1 + LTO    | above `+ -flto`                                | 479.62       | 20.85    |
+| ARMCLANG (Keil AC6) | `-Ofast -ffp-contract=fast -funroll-all-loops` | 540.02       | 18.52    |
+| ARMCLANG (Keil AC6) | `-Omax -fno-lto`                               | **633.87**   | **15.78** |
+| ST Arm clang 21.1.1 | `-Ofast -ffp-contract=fast`                    | 476.24       | 21.00    |
 
-All runs must share the same CRC (`crcfinal 0x988c`) and report
+All runs share the same CRC (`crcfinal 0x988c`) and report
 `Correct operation validated`. Note CoreMark's per-run CRC forces the work to
 execute, so **LTO does not inflate it** the way it cheats Dhrystone — see
 `../dhry_160m/LTO_on_dhrystone.md`.
 
 ## Most aggressive flags
 
-- **ARMCLANG (Keil AC6): `-Omax -fno-lto`.** Bare `-Omax` makes armclang emit
-  LLVM **LTO** objects that GNU ld cannot link, hence `-fno-lto`. Pass it as a
-  **C-only** flag (`BENCH_OPT_C`) so it stays off the asm/link steps, with
-  `BENCH_OPT` cleared.
-- **GCC:** `-Ofast -ffp-contract=fast -funroll-all-loops` (already the default).
-- **ST Arm clang:** flat at its `-Ofast -ffp-contract=fast` default;
+Highest measured score per toolchain (see Results):
+
+- **ARMCLANG (Keil AC6): `-Omax -fno-lto`** — 633.87 it/s, the fastest measured
+  configuration overall (1.26× the armclang `-Ofast` score). Bare `-Omax` makes
+  armclang emit LLVM **LTO** objects that GNU ld cannot link, hence `-fno-lto`.
+  Pass it as a **C-only** flag (`BENCH_OPT_C`) so it stays off the asm/link
+  steps, with `BENCH_OPT` cleared.
+- **GCC:** `-Ofast -ffp-contract=fast -funroll-all-loops` (already the default)
+  → 504.39 it/s; adding `-DSTM32_LTO=ON` does **not** help here (479.62 it/s).
+- **ST Arm clang:** 476.24 it/s at its `-Ofast -ffp-contract=fast` default;
   `-funroll-all-loops` is not supported by clang.
 
 ```bash

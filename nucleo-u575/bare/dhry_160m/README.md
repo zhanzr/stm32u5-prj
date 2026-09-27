@@ -10,20 +10,21 @@ ST-Link VCP, 115200 8-N-1).
 
 ## Results
 
-> **Not yet measured on this board.** Capture the console while the chip runs
-> the benchmark (it re-runs every ~50 s) and take the last complete
-> `Dhrystones per Second` line. Fill in the table below from hardware runs.
+Measured on hardware at 160 MHz (hard-float): capture the console while the
+chip runs the benchmark (it re-runs every ~25 s), and take the last complete
+`Dhrystones per Second` line.
 
 | Toolchain           | Flags                                      | µs/run | Dhrystones/s | DMIPS/MHz |
 | ------------------- | ------------------------------------------ | ------ | ------------ | --------- |
-| GCC                 | `-Ofast -ffp-contract=fast -funroll-loops` | —      | —            | —         |
-| ARMCLANG (Keil AC6) | `-Ofast -ffp-contract=fast -funroll-loops` | —      | —            | —         |
+| GCC 15.3.1          | `-Ofast -ffp-contract=fast -funroll-loops` | 2.238  | **446,848**  | **1.590** |
+| ARMCLANG (Keil AC6) | `-Ofast -ffp-contract=fast -funroll-loops` | 2.025  | **493,730**  | **1.756** |
 
-All runs must print the correct final values (Int_Glob=5, Bool_Glob=1,
-Ch_1_Glob='A', Ch_2_Glob='B', Arr_1_Glob[8]=7, Arr_2_Glob[8][7]=runs+10).
+All runs print the correct final values (Int_Glob=5, Bool_Glob=1, Ch_1_Glob='A',
+Ch_2_Glob='B', Arr_1_Glob[8]=7, Arr_2_Glob[8][7]=runs+10).
 
 > ⚠ **Do not use LTO for Dhrystone.** GCC `-flto` sees the whole program and
-> hoists the loop-invariant work out of the timed loop, inflating the score
+> hoists the loop-invariant work out of the timed loop: here it inflates the
+> score to **820,412 Dhrystones/s / 2.918 DMIPS/MHz** (1.219 µs/run, 1.84×)
 > while still passing the final-value check. The LTO number is meaningless.
 > Full explanation and reproduction: **`LTO_on_dhrystone.md`** in this folder.
 

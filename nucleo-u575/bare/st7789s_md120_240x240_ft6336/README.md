@@ -79,13 +79,11 @@ timed), info pages (normal + inverted, with the solid-fill durations),
 HSV gradient sweep, LED test (the three on-board LEDs) - with a live FPS
 counter, plus touch printout on the serial port.
 
-> **Timing not yet measured on this board.** The L4 port measured **105 ms**
-> per 240x240 solid fill at 60 MHz SCK; that number is dominated by the STM32
-> SPI HAL's per-frame overhead (the HAL raises `TXE` only when the TX FIFO is
-> empty), not the wire time. The U575 build runs at 40 MHz SCK, so expect a
-> similar fixed-cost-dominated figure - measure it on hardware and record the
-> `[LCD] solid fills (ms):` line. If a module/wiring proves marginal, drop to
-> /8 via `LCD_SPI1_PRESC`.
+Measured on hardware: **80 ms** per 240x240 solid fill at 40 MHz SCK
+(57,600 px). As on the L4/f7 ports this is dominated by the STM32 SPI HAL's
+per-frame overhead (the HAL raises `TXE` only when the TX FIFO is empty), not
+the wire time - the L4 port measured 105 ms at a *higher* 60 MHz for the same
+reason. If a module/wiring proves marginal, drop to /8 via `LCD_SPI1_PRESC`.
 
 ## Build / flash / console
 
@@ -106,11 +104,11 @@ TOUCH: FT6336 I2C1 SCL=PB8 SDA=PB9
 [LCD] phase: HARDWARE banner
 [LCD] running patterns on HARDWARE SPI1 @ 40 MHz
 [LCD] phase: TEST_STAND
-[LCD] solid fills (ms): RED=... GREEN=... BLUE=... WHITE=... BLACK=...
+[LCD] solid fills (ms): RED=80 GREEN=80 BLUE=80 WHITE=80 BLACK=80
 [LCD] phase: info
-[LCD] info: compiler=GCC ... build=...
+[LCD] info: compiler=GCC 15.3.1 build=Sep 27 2026 07:10:23
 [LCD] info: freq=160 MHz drive=HW SPI1
-[LCD] info: UID=...
+[LCD] info: UID=001F004A5243501220303730
 [LCD] phase: info (inverted colors)
 [LCD] phase: gradient
 [LCD] phase: LED test

@@ -2,10 +2,9 @@
   * @file    adc_internal.c
   * @brief   ADC1 internal-channel sampling (VREFINT / temperature / VBAT).
   *
-  * ADC1's kernel clock is SYSCLK (160 MHz) divided by 4 = 40 MHz
-  * (ADC_CLOCK_ASYNC_DIV4; the U5 ADC clock must stay within its datasheet
-  * limit, so 40 MHz is comfortably in range). 814-cycle sample time settles
-  * the internal bandgap/sensor.
+ * ADC1's kernel clock is the asynchronous clock taken from HSI (16 MHz).
+ * That is the source ST/CubeMX pick for the ADC on this part - the ADC is not
+ * clocked from SYSCLK here. 814-cycle sample time settles the internal sensor.
   *
   * The three internal channels are on the ADC1 regular group:
   *   rank 1: VREFINT      - used to back out Vdda
@@ -32,17 +31,17 @@ void ADC_Internal_Init(void)
 
     __HAL_RCC_ADC12_CLK_ENABLE();
 
-    /* ADC kernel clock = SYSCLK (160 MHz); the ADC divides it by 4 in the
-     * ClockPrescaler below (160/4 = 40 MHz). */
+    /* ADC kernel clock = HSI (16 MHz, asynchronous). SYSCLK must not be used
+     * as the ADC clock on this part. */
     PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADCDAC;
-    PeriphClkInit.AdcDacClockSelection = RCC_ADCDACCLKSOURCE_SYSCLK;
+    PeriphClkInit.AdcDacClockSelection = RCC_ADCDACCLKSOURCE_HSI;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
     {
         Error_Handler();
     }
 
     hadc1.Instance                    = ADC1;
-    hadc1.Init.ClockPrescaler         = ADC_CLOCK_ASYNC_DIV4;   /* 160/4 = 40 MHz */
+    hadc1.Init.ClockPrescaler         = ADC_CLOCK_ASYNC_DIV1;   /* HSI = 16 MHz */
     hadc1.Init.Resolution             = ADC_RESOLUTION_12B;
     hadc1.Init.GainCompensation       = 0;
     hadc1.Init.ScanConvMode           = ADC_SCAN_ENABLE;   /* scan the 3 internal channels */

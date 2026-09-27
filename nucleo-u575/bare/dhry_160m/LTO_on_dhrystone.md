@@ -43,11 +43,24 @@ The timed region shrinks to a skeleton that re-checks a couple of values per
 iteration. The remaining (hoisted) code still executes — once — so the printed
 `Int_Glob`, `Arr_2_Glob`, etc. are still correct and the built-in check passes.
 
-## Reference measurements (nucleo-l4r5, STM32L4R5ZIT6 @ 120 MHz, hard-float)
+## Measured evidence (nucleo-u575, STM32U575ZIT6 @ 160 MHz, hard-float)
 
-The numbers below are from the sibling **L4** port of this project, which is
-where the artifact was first characterised. The same behaviour applies on the
-U575 at 160 MHz; measure it there with the recipe further down.
+| Build               | Flags                                      | µs/run | Dhrystones/s | DMIPS/MHz |
+| ------------------- | ------------------------------------------ | ------ | ------------ | --------- |
+| GCC 15.3.1          | `-Ofast -ffp-contract=fast -funroll-loops` | 2.238  | 446,848      | 1.590     |
+| GCC 15.3.1 + LTO    | above `+ -flto`                            | 1.219  | 820,412      | 2.918 ⚠   |
+| armclang 6.24 (AC6) | `-Ofast -ffp-contract=fast -funroll-loops` | 2.025  | 493,730      | 1.756     |
+
+- Non-LTO GCC and armclang agree with each other within ~10 % - consistent,
+  meaningful numbers.
+- The LTO build runs **1.84× faster per iteration** with identical final values.
+  Per-run time drops from 2.238 µs to 1.219 µs; the "extra" 1.019 µs of work was
+  simply moved out of the timed region.
+- This is the same mechanism reported elsewhere: a public aarch64 example shows
+  Dhrystone inflating from 5.2 M to 19.5 M Dhrystones/s (~3.7×) with `-flto` and
+  a 3.5× drop in executed instructions.
+
+### Reference measurements (nucleo-l4r5, STM32L4R5ZIT6 @ 120 MHz)
 
 | Build               | Flags                                      | µs/run | Dhrystones/s | DMIPS/MHz |
 | ------------------- | ------------------------------------------ | ------ | ------------ | --------- |
@@ -60,9 +73,6 @@ U575 at 160 MHz; measure it there with the recipe further down.
 - The LTO build ran **2.18× faster per iteration** with identical final values.
   Per-run time dropped from 4.143 µs to 1.901 µs; the "extra" 2.242 µs of work
   was simply moved out of the timed region.
-- This is the same mechanism reported elsewhere: a public aarch64 example shows
-  Dhrystone inflating from 5.2 M to 19.5 M Dhrystones/s (~3.7×) with `-flto` and
-  a 3.5× drop in executed instructions.
 
 ## It's a known issue
 

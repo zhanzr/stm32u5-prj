@@ -48,11 +48,11 @@ set(_STARM_SYSROOT "${STARM_ROOT}/lib/clang-runtimes/newlib")
 
 # The newlib runtime is shipped as a sysroot with multilib variants. Compiling
 # and linking need the sysroot (so <stdio.h>/... resolve) and the exact target
-# the armv8m.main hard-float multilib declares (thumbv8m.main-none-eabihf,
-# fpv5-sp-d16, unaligned access); otherwise clang picks no multilib (and, at
-# link time, cannot locate libclang_rt.builtins.a). These are
+# the armv8m.main hard-float multilib declares (thumbv8m.main-st-none-eabihf,
+# fpv5-sp-d16, unaligned access); otherwise clang picks no multilib and libc
+# headers (<stdio.h>, ...) are not found. These are
 # in CMAKE_C_FLAGS as well as the link line, so keep cpu/fpu here too.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --target=thumbv8m.main-none-eabihf -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -munaligned-access")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --target=thumbv8m.main-st-none-eabihf -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -munaligned-access")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${_STARM_SYSROOT}")
 
 # Assembly: GNU as (startup_stm32u575xx.s uses GAS syntax).
