@@ -6,6 +6,8 @@ through an **ST-Link** over **SWD**, with `printf()` streamed out **USART1
 (PA9/PA10)** at **115200 baud** — the ST-Link's **virtual COM port (VCP)** is
 the console.
 
+![nucleo-u575 board](board_images/board_0.png)
+
 ## Board facts
 
 - MCU: **STM32U575ZIT6** (Cortex-M33 @ up to 160 MHz, 2 MB flash, 768 KB SRAM)
