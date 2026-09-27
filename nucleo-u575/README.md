@@ -35,14 +35,23 @@ and the CMake helpers in `cmake/`.
 > out of the timed region and inflates the score (still passing the checks).
 > See `bare/dhry_160m/LTO_on_dhrystone.md`.
 
-## Analog supplies (ADC / DAC / COMP / OPAMP)
+## Power domains & analog supplies
 
-Two things are easy to miss on this part — without them the ADC looks dead
-(its internal regulator never becomes ready, so `ADC_Enable()` times out and
-calibration hangs in `Error_Handler`):
+Several supplies are **independent of VDD and off by default**, and two of them
+are easy to miss on this part:
 
 - **VDDA must be enabled** — `HAL_PWREx_EnableVddA()` in `HAL_MspInit()`
-  (`board/stm32u5xx_hal_msp.c`).
+  (`board/stm32u5xx_hal_msp.c`). Without it the ADC analog block stays
+  unpowered: its internal regulator never becomes ready (LDORDY never sets),
+  `ADC_Enable()` times out and calibration hangs in `Error_Handler`. VDDA also
+  feeds the DAC/comparators/OPAMP.
+- **VDDIO2 must be enabled** — `HAL_PWREx_EnableVddIO2()`, also in
+  `HAL_MspInit()`. It powers the **PG[15:2]** I/Os, so anything on PORTG needs
+  it. On this board **LD3 (red) is PG2**, so without it the LED never lights
+  even though the pin is configured as an output.
+
+A third, ADC-specific point:
+
 - **The ADC kernel clock must actually run** — the ADC takes **HSI** (16 MHz,
   async) as its clock, so `SystemClock_Config()` turns HSI on even though the
   CPU runs from MSI→PLL.

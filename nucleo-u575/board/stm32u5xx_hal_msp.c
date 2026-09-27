@@ -21,5 +21,10 @@ void HAL_MspInit(void)
      * feeds the DAC/comparators/OPAMP. */
     HAL_PWREx_EnableVddA();
 
+    /* Enable the VDDIO2 supply, which powers the PG[15:2] I/Os. LD3 (red) on
+     * this board is PG2, so without this its output driver is unpowered and
+     * the LED never lights even though the pin is configured as an output. */
+    HAL_PWREx_EnableVddIO2();
+
     HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_3);
 }

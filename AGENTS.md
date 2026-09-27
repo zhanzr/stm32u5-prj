@@ -103,6 +103,15 @@ belongs there and is pulled in by the board-apply CMake function.
   `SystemClock_Config()` enables HSI even though the CPU runs from MSI→PLL.
   The LL ADC calibration constants are **14-bit**; use the
   `__LL_ADC_CALC_*` macros rather than open-coding a 12-bit formula.
+- **PORTG needs VDDIO2**: `HAL_PWREx_EnableVddIO2()` in `HAL_MspInit()` powers
+  the PG[15:2] I/Os. LD3 (red) is PG2, so without it that LED never lights.
+- **New-generation SPI needs `MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_ENABLE`**
+  for bit-banged-style protocols (see the LCD project). `HAL_SPI_Transmit()`
+  disables the peripheral after every call, and without `AFCNTR` the SPI
+  releases the SCK/MOSI alternate functions on disable — with CS already low
+  that edge is latched by the panel as an extra bit and the stream shifts.
+  The old-generation IP (L4/F7) had no `AFCNTR` bit, so ports from those
+  boards need this added.
 - starm-clang needs the `st`-vendor triple (`--target=thumbv8m.main-st-none-eabihf`);
   the plain `thumbv8m.main-none-eabihf` finds no multilib and loses the libc headers.
 - Do not add code comments beyond what's needed; the existing sources use

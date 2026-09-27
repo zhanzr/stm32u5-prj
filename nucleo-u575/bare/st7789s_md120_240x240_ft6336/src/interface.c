@@ -108,6 +108,15 @@ static void spi_hw_init(void)
     s_hspi.Init.TIMode            = SPI_TIMODE_DISABLE;
     s_hspi.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
     s_hspi.Init.CRCPolynomial     = 7U;
+    /* Keep the SCK/MOSI alternate functions driven while the peripheral is
+     * disabled. HAL_SPI_Transmit() disables the SPI at the end of every call
+     * (and re-enables it at the start of the next), and without AFCNTR the
+     * new-generation SPI IP releases the AF I/Os on disable. Because CS is
+     * already low, the resulting edge on SCK is latched by the panel as an
+     * extra bit and the whole 9-bit frame stream shifts by one, so the panel
+     * never initialises (all-white display). The old-generation IP (L4/F7)
+     * had no such bit, which is why this is U5-specific. */
+    s_hspi.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_ENABLE;
     (void)HAL_SPI_Init(&s_hspi);
     s_spi_ready = 1U;
 }

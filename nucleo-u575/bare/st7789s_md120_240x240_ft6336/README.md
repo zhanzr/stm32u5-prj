@@ -40,6 +40,15 @@ transmits **16-bit words packed with the 9-bit-frame bitstream**
   54 MHz. `LCD_SPI1_PRESC` selects /8 = 20 MHz or /16 = 10 MHz. The SCL/SDA
   pins use `GPIO_SPEED_FREQ_HIGH` (VERY_HIGH edges ring on flying wires - the
   failure mode that hit the ili9163c bring-up on the f746).
+- **`MasterKeepIOState` must be ENABLED on this part.** The U5 has the
+  new-generation SPI IP, whose `AFCNTR` bit keeps the SCK/MOSI alternate
+  functions driven while the peripheral is disabled. `HAL_SPI_Transmit()`
+  disables the SPI at the end of every call and re-enables it at the start of
+  the next; without `AFCNTR` the AF I/Os are released on disable, and because
+  CS is already low that edge on SCK is latched by the panel as an extra bit —
+  shifting the whole 9-bit frame stream by one so the panel never initialises
+  (**all-white display**). The old-generation IP (L4/F7) had no such bit, which
+  is why this is U5-specific.
 
 ## Touch: FT6336 over hardware I2C1
 
