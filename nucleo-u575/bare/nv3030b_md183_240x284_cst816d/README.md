@@ -1,4 +1,4 @@
-# qspi_lcm_touch - NV3030B 1.83" 240x284 LCM over plain SPI + CST816D touch
+# nv3030b_md183_240x284_cst816d - NV3030B 1.83" 240x284 LCM over plain SPI + CST816D touch
 
 Drives the **TK018F3716** 1.83" **240x284** module - **NV3030B** LCD
 controller plus **CST816D** capacitive touch - on the **nucleo-u575** board
@@ -109,7 +109,7 @@ ninja -C build flash             # probe-rs download + reset over ST-Link SWD
 Console is **USART1** (PA9/PA10, ST-Link VCP, 115200 8-N-1):
 
 ```
-==== nucleo-u575 (STM32U575ZIT6) qspi_lcm_touch @ 160 MHz ====
+==== nucleo-u575 (STM32U575ZIT6) nv3030b_md183_240x284_cst816d @ 160 MHz ====
 NV3030B 1.83" 240x284 (wrapped-command SPI, MADCTL 0x08):
 CS=PA4 SCK=PA5 MOSI=PA7 (MISO not connected - write-only)
 loop: SOFT (bit-bang) <-> HW (SPI1), same 3 wires

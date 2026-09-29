@@ -1,9 +1,9 @@
-# nucleo-u575 — STM32U575ZIT6 development projects
+# nucleo-u575 �?STM32U575ZIT6 development projects
 
 Bare-metal projects for the **nucleo-u575** board (NUCLEO-U575ZI-Q,
 **STM32U575ZIT6**), built with **CMake/Ninja** (Pico-style), debugged/flashed
 through an **ST-Link** over **SWD**, with `printf()` streamed out **USART1
-(PA9/PA10)** at **115200 baud** — the ST-Link's **virtual COM port (VCP)** is
+(PA9/PA10)** at **115200 baud** �?the ST-Link's **virtual COM port (VCP)** is
 the console.
 
 ![nucleo-u575 board](board_images/board_0.png)
@@ -11,13 +11,13 @@ the console.
 ## Board facts
 
 - MCU: **STM32U575ZIT6** (Cortex-M33 @ up to 160 MHz, 2 MB flash, 768 KB SRAM)
-- Clock: **MSI 4 MHz** → PLL (M=1, N=80, R=2) → **160 MHz** (no external crystal required)
+- Clock: **MSI 4 MHz** �?PLL (M=1, N=80, R=2) �?**160 MHz** (no external crystal required)
 - Regulator: **VOS1** on the **SMPS** supply (the NUCLEO default); flash latency 4 WS
-- Cache: **ICACHE** enabled (1-way) — at 160 MHz the core outruns flash
+- Cache: **ICACHE** enabled (1-way) �?at 160 MHz the core outruns flash
 - LEDs (all **high-active**): **LD1 green PC7**, **LD2 blue PB7**, **LD3 red PG2**
 - User button: **B1 PC13**, momentary, **active-low** (`BTN_PRESSED()` = pin == 0)
-- Console: **USART1** on **PA9 (TX) / PA10 (RX)**, AF7, **115200 8-N-1** → ST-Link VCP
-- SWO: **PB3** (AF0) — DWT/ITM enabled, but the UART VCP is the console
+- Console: **USART1** on **PA9 (TX) / PA10 (RX)**, AF7, **115200 8-N-1** �?ST-Link VCP
+- SWO: **PB3** (AF0) �?DWT/ITM enabled, but the UART VCP is the console
 - Debug: **ST-Link** (V2/V3) over SWD; probe-rs chip name `STM32U575ZI`, auto-detected
 
 ## Projects (`bare/`)
@@ -28,13 +28,13 @@ the console.
 | `bare/dhry_160m`     | Dhrystone 2.1, 10,000,000 runs, GCC or armclang, `-Ofast -ffp-contract=fast -funroll-loops` |
 | `bare/coremark_160m` | CoreMark 1.0.1, 10,000 iterations, GCC / armclang / starm-clang, `-Ofast`-class flags |
 | `bare/st7789s_md120_240x240_ft6336` | **ST7789S 1.2" 240x240** LCD (**TK012F6** module, 3-wire 9-bit serial, no D/C pin) via **HW SPI1** + **FT6336** capacitive touch over **HW I2C1**; pattern set, FPS counter, touch printout |
-| `bare/qspi_lcm_touch` | **NV3030B 1.83" 240x284** LCM (**TK018F3716** module, wrapped-command QSPI: inst+addr 1-line, data 1/2/4-line, looped quad→dual→single) via **HW OCTOSPI1** (NCS=PA2 CLK=PB10 IO0=PE12 IO1=PB0 IO2=PE14 IO3=PE15) + **CST816D** touch over **HW I2C1**; pattern set, FPS counter, touch printout (ported from the ch32v307 reference) |
+| `bare/nv3030b_md183_240x284_cst816d` | **NV3030B 1.83" 240x284** LCM (**TK018F3716** module, wrapped-command SPI: CS frame with `02 00 <cmd> 00` header, vendor-verbatim registers) via **HW SPI1** (CS=PA4 SCK=PA5 MOSI=PA7, write-only) + **CST816D** touch over **HW I2C1**; SOFT/HW bus passes, pattern set, FPS counter, touch printout (ported from the ch32v307 reference; OCTOSPI path dropped - HAL transmit was byte-at-a-time, ~8 M CPU ops per fill) |
 
 All projects share the board support in `board/` (160 MHz clock from the MSI,
 PC7/PB7/PG2 LEDs, PC13 button, USART1 console, newlib stubs, ST HAL wiring)
 and the CMake helpers in `cmake/`.
 
-> ⚠ **Do not use LTO for Dhrystone.** GCC `-flto` hoists loop-invariant work
+> �?**Do not use LTO for Dhrystone.** GCC `-flto` hoists loop-invariant work
 > out of the timed region and inflates the score (still passing the checks).
 > See `bare/dhry_160m/LTO_on_dhrystone.md`.
 
@@ -43,19 +43,19 @@ and the CMake helpers in `cmake/`.
 Several supplies are **independent of VDD and off by default**, and two of them
 are easy to miss on this part:
 
-- **VDDA must be enabled** — `HAL_PWREx_EnableVddA()` in `HAL_MspInit()`
+- **VDDA must be enabled** �?`HAL_PWREx_EnableVddA()` in `HAL_MspInit()`
   (`board/stm32u5xx_hal_msp.c`). Without it the ADC analog block stays
   unpowered: its internal regulator never becomes ready (LDORDY never sets),
   `ADC_Enable()` times out and calibration hangs in `Error_Handler`. VDDA also
   feeds the DAC/comparators/OPAMP.
-- **VDDIO2 must be enabled** — `HAL_PWREx_EnableVddIO2()`, also in
+- **VDDIO2 must be enabled** �?`HAL_PWREx_EnableVddIO2()`, also in
   `HAL_MspInit()`. It powers the **PG[15:2]** I/Os, so anything on PORTG needs
   it. On this board **LD3 (red) is PG2**, so without it the LED never lights
   even though the pin is configured as an output.
 
 A third, ADC-specific point:
 
-- **The ADC kernel clock must actually run** — the ADC takes **HSI** (16 MHz,
+- **The ADC kernel clock must actually run** �?the ADC takes **HSI** (16 MHz,
   async) as its clock, so `SystemClock_Config()` turns HSI on even though the
   CPU runs from MSI→PLL.
 
@@ -66,7 +66,7 @@ while a project may run the ADC at 12 bits; use the official
 ## Clock tree (160 MHz)
 
 ```
-MSI 4 MHz → PLL (M=1, N=80, R=2) → SYSCLK 160 MHz
+MSI 4 MHz �?PLL (M=1, N=80, R=2) �?SYSCLK 160 MHz
   AHB=160, APB1=160, APB2=160, APB3=160, flash latency 4, VOS1 + SMPS
 ```
 
@@ -106,14 +106,14 @@ as a `COMxx`): **115200 baud, 8-N-1**.
 ### `Target voltage (VAPP) is 0.00 V. Is your target device powered?` + `JtagGetIdcodeError`
 
 The probe is detected but the ST-Link reads the **target supply as 0 V**, so it
-cannot drive SWD. This is a **board power** problem, not firmware/tooling — no
+cannot drive SWD. This is a **board power** problem, not firmware/tooling �?no
 build or `probe-rs` option can work around it. On a NUCLEO-144 board check, in
-order (jumper names below follow the NUCLEO-144 layout — confirm against the
+order (jumper names below follow the NUCLEO-144 layout �?confirm against the
 board's user manual):
 
 1. **IDD / power jumper fitted.** The `IDD` jumper (2-pin, `JP5` on
    NUCLEO-144) connects the ST-Link's 3V3 to the MCU `VDD`. It must be **fitted**
-   for normal use — it is only removed to measure current. This is the most
+   for normal use �?it is only removed to measure current. This is the most
    common cause.
 2. **VDD source jumper correct.** The `VDD`/`VDD_MCU` selector (3-pin `JP6` on
    NUCLEO-144) must select **3V3 from the ST-Link** (default). If it is set to

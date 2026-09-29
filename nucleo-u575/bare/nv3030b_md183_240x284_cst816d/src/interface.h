@@ -1,5 +1,5 @@
 /*
-  interface.h - LCD bus primitives for the qspi_lcm_touch project
+  interface.h - LCD bus primitives for the nv3030b_md183_240x284_cst816d project
   (nucleo-u575, NV3030B 1.83" 240x284 module).
 
   PLAIN single-lane SPI on three wires - the OCTOSPI/QuadSPI path is gone.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the STM32U575ZIT6 "nucleo-u575" qspi_lcm_touch project with CMake + Ninja
+# Build the STM32U575ZIT6 "nucleo-u575" nv3030b_md183_240x284_cst816d project with CMake + Ninja
 # (Pico-style). Run with:  bash build.sh    (or ./build.sh on Linux)
 set -euo pipefail
 

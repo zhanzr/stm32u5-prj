@@ -1,5 +1,5 @@
 /*
-  qspi_lcm_touch main for the nucleo-u575 (STM32U575ZIT6 @ 160 MHz).
+  nv3030b_md183_240x284_cst816d main for the nucleo-u575 (STM32U575ZIT6 @ 160 MHz).
   TK018F3716 module: NV3030B 1.83" 240x284 panel over the wrapped-
   command QSPI protocol on OCTOSPI1 (hardware NCS, mode 3, 40 MHz SCK),
   plus CST816D capacitive touch over hardware I2C1 (PB8/PB9), with the
@@ -479,7 +479,7 @@ int main(void)
     HAL_Init();
     Board_Init();          /* clocks (160 MHz), LEDs, button, console */
 
-    printf("\r\n==== nucleo-u575 (STM32U575ZIT6) qspi_lcm_touch @ %lu MHz ====\r\n",
+    printf("\r\n==== nucleo-u575 (STM32U575ZIT6) nv3030b_md183_240x284_cst816d @ %lu MHz ====\r\n",
            (unsigned long)(SystemCoreClock / 1000000UL));
     printf("NV3030B 1.83\" 240x284 (wrapped-command SPI, MADCTL 0x08):\r\n");
     printf("CS=PA4 SCK=PA5 MOSI=PA7 (MISO not connected - write-only)\r\n");

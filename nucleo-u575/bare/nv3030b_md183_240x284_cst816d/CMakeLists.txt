@@ -1,4 +1,4 @@
-# qspi_lcm_touch: NV3030B 1.83" 240x284 LCM (TK018F3716 module) driven
+# nv3030b_md183_240x284_cst816d: NV3030B 1.83" 240x284 LCM (TK018F3716 module) driven
 # over plain single-lane SPI + CST816D touch on hardware I2C1, on the
 # NUCLEO-U575ZI-Q @ 160 MHz. Ported from the ch32v307 reference
 # nv3030b_md183_240x284_cst816d (same module, vendor-verbatim registers).
@@ -24,7 +24,7 @@ if(NOT CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/arm-none-eabi-toolchain.cmake")
 endif()
 
-project(qspi_lcm_touch C ASM)
+project(nv3030b_md183_240x284_cst816d C ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
