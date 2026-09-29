@@ -74,6 +74,23 @@
 #define LCD_SOFT_CS_SETTLE 200U
 #endif
 
+/* Emit the QSPI "enable" block (DEh / DFh 98 55 / CEh 0Dh 00 / D8h 08 00)
+ * in the init sequence.
+ *
+ * NORMALLY LEAVE THIS OFF. The block comes only from the vendor ESP32
+ * QSPI example; it is NOT in the NV3030B datasheet and NOT in the
+ * single-lane vendor examples, and those are the ones that match this
+ * wiring and the ch32v307 reference that is proven on this module. With it
+ * off the init sequence is byte-for-byte identical to that reference.
+ *
+ * Turn it ON only to test the hypothesis that this glass needs the QSPI
+ * register region unlocked before it will display:
+ *   bash build.sh -DLCD_INIT_ENABLE_BLOCK=1
+ */
+#ifndef LCD_INIT_ENABLE_BLOCK
+#define LCD_INIT_ENABLE_BLOCK 0U
+#endif
+
 void          QSPI_Init(void);
 void          QSPI_SetMode(uint8_t mode);     /* LCD_BUS_SOFT / LCD_BUS_HW */
 uint8_t       QSPI_GetMode(void);

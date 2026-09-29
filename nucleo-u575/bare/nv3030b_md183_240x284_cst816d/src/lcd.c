@@ -146,9 +146,11 @@ void LCD_IC_Init(void)
     QSPI_Write(0xF1, pF1, sizeof pF1);
     QSPI_Write(0xF6, pF6, sizeof pF6);
 
-    /* Vendor QSPI-enable block (ESP32 example, the only vendor reference
-     * that drives this module in QSPI): unlock + read-channel config. */
+#if (LCD_INIT_ENABLE_BLOCK != 0U)
+    /* Off by default - see the LCD_INIT_ENABLE_BLOCK comment in
+     * interface.h. Not part of the reference sequence. */
     QSPI_EnableBlock();
+#endif
 
     QSPI_Write(0xFD, pFD_exit, sizeof pFD_exit);  /* command set off */
     QSPI_Write(0x3A, p3A, sizeof p3A);      /* COLMOD 16bpp          */

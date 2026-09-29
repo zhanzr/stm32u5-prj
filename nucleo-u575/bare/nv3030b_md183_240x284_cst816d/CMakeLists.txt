@@ -29,6 +29,15 @@ project(nv3030b_md183_240x284_cst816d C ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Init-sequence variant. OFF (default) sends exactly the vendor SPI
+# sequence that the proven ch32v307 reference uses. ON additionally emits
+# the QSPI "enable" block (DEh/DFh/CEh/D8h) that appears only in the
+# vendor ESP32 QSPI example - not in the datasheet, and not in the
+# single-lane examples that match this wiring. Use ON to test the
+# hypothesis that this glass needs the QSPI region unlocked.
+#   bash build.sh -DLCD_INIT_ENABLE_BLOCK=1
+option(LCD_INIT_ENABLE_BLOCK "Send the ESP32-only QSPI enable block during init" OFF)
+
 # Board include first: it resolves STM32U5_HAL_SRC (the vendored repo-root
 # drivers/) which the source list below references.
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/stm32u575_board.cmake)
@@ -40,6 +49,7 @@ add_executable(${PROJECT_NAME}.elf
     src/touch.c
     src/lcd_fonts.c
     src/lcd_font_1608.c
+    src/asset_test1.c        # 64x64 RGB565 bring-up asset (generated)
     # SPI (display bus: soft bit-bang or SPI1) + I2C HAL (touch on I2C1)
     ${STM32U5_HAL_SRC}/stm32u5xx_hal_spi.c
     ${STM32U5_HAL_SRC}/stm32u5xx_hal_i2c.c
@@ -47,6 +57,10 @@ add_executable(${PROJECT_NAME}.elf
 )
 
 stm32u575_apply_board(${PROJECT_NAME}.elf "-O2")
+
+if(LCD_INIT_ENABLE_BLOCK)
+    target_compile_definitions(${PROJECT_NAME}.elf PRIVATE LCD_INIT_ENABLE_BLOCK=1U)
+endif()
 
 target_include_directories(${PROJECT_NAME}.elf PRIVATE
     src

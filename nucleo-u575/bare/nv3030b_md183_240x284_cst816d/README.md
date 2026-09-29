@@ -54,6 +54,38 @@ TEST_STAND vendor screens with timed solid fills, info pages (normal +
 inverted), HSV gradient, LED test - with a live FPS counter and touch
 printout throughout.
 
+### Cold-boot bring-up (ported from the reference)
+
+Before the patterns, each pass runs a **bring-up-by-drawing** loop
+(`panel_bringup()`): tile the screen with the 64x64 RGB565 asset
+(`asset_test1`), `LCD_Reinit()`, repeat - three times, then one final fill
+with the last init in effect.
+
+How long a cold-booted panel needs before it accepts commands varies run
+to run and cannot be measured (the module is write-only by design), so
+this deliberately avoids sleeping or counting retries. The drawing **is**
+the wait and doubles as the test: the moment the artwork appears, the
+panel is live. Interleaving fills with `LCD_Reinit()` gives a
+slow-starting panel several chances to catch an init.
+
+Tiles are whole and the grid is centred, so the panel's rounded corners
+never clip one; the range stays inside `INFO_TOP..anim_h()` to clear the
+rows above and the FPS band below.
+
+### The bring-up asset (`asset_test1`)
+
+`src/asset_test1.c` / `.h` are **generated** (4096 `uint16_t` = 64x64,
+RGB565 row-major, alpha composited over black). Do not edit by hand -
+regenerate with the checked-in tool:
+
+```bash
+python tools/png_to_rgb565.py <input.png> src/asset_test1.c asset_test1
+```
+
+`tools/png_to_rgb565.py` is pure standard library (zlib only), so it runs
+in a plain Python install with no Pillow/numpy. The asset is byte-identical
+to the one used by the ch32v307 reference and the tricore ports.
+
 > Note on the HW path: `HAL_SPI_Transmit()` disables the peripheral at the
 > end of every call, and the U5's new-generation SPI IP releases the SCK/
 > MOSI alternate functions on disable unless `MasterKeepIOState` is enabled.
@@ -95,9 +127,21 @@ Common GND between the module and the board is required.
   first clock; the checkerboard stress pattern right after init is the
   "did the init land" test.
 - `QSPI_EnableBlock()` sends the `DEh/DFh/CEh/D8h` unlock block from the
-  vendor ESP32 example. The **single-lane** vendor examples for this module
-  do not carry it and it is unverified here - it is isolated in that one
-  function so it is easy to disable.
+  vendor ESP32 example. It is **OFF by default**: the block is not in the
+  NV3030B datasheet and not in the single-lane vendor examples, so with it
+  off the init sequence is byte-for-byte identical to the proven ch32v307
+  reference. Enable it to test the hypothesis that this glass needs the
+  QSPI register region unlocked:
+
+  ```bash
+  bash build.sh -DLCD_INIT_ENABLE_BLOCK=1
+  ```
+
+  Use a separate build dir to keep both variants available and A/B them:
+
+  ```bash
+  BUILD_DIR=build-eb bash build.sh -DLCD_INIT_ENABLE_BLOCK=1
+  ```
 
 ## Build / flash / console
 
@@ -113,24 +157,36 @@ Console is **USART1** (PA9/PA10, ST-Link VCP, 115200 8-N-1):
 NV3030B 1.83" 240x284 (wrapped-command SPI, MADCTL 0x08):
 CS=PA4 SCK=PA5 MOSI=PA7 (MISO not connected - write-only)
 loop: SOFT (bit-bang) <-> HW (SPI1), same 3 wires
+init: vendor SPI sequence only (reference-exact)
 TOUCH: CST816D I2C1 SCL=PB8 SDA=PB9
-[SPI] soft SPI (bit-banged) SCK=1882 kHz, div=4
+[SPI] soft SPI (bit-banged) SCK=1860 kHz, div=4
 [TOUCH] self-test: ACK (chip present)
 
 ==== bus: SOFT bit-banged SPI ====
 [LCD] SCK = 1.8 MHz
-[LCD] solid fills (ms): RED=581 GREEN=581 BLUE=581 WHITE=576 BLACK=583
+[LCD] bring-up 1/3: draw
+[LCD] bring-up: Reinit
+[LCD] bring-up 2/3: draw
+[LCD] bring-up: Reinit
+[LCD] bring-up 3/3: draw
+[LCD] bring-up: Reinit
+[LCD] bring-up: done
+[LCD] solid fills (ms): RED=588 GREEN=588 BLUE=588 WHITE=588 BLACK=588
 
 ==== bus: HW SPI1 peripheral ====
 [LCD] SCK = 40 MHz
-[LCD] solid fills (ms): RED=.. GREEN=.. BLUE=.. WHITE=.. BLACK=..
+[LCD] bring-up 1/3: draw
+...
+[LCD] solid fills (ms): RED=37 GREEN=37 BLUE=37 WHITE=37 BLACK=37
 ```
 
 ## Files
 
-- `src/main.c` - Soft/Hard SPI loop + pattern set + touch printout
+- `src/main.c` - Soft/Hard SPI loop + bring-up + pattern set + touch printout
 - `src/interface.c` / `interface.h` - the two transports behind one byte API
   (`QSPI_Write` / `QSPI_WritePixel` share one CS frame per transaction)
+- `src/asset_test1.c` / `.h` - generated 64x64 RGB565 bring-up asset
+- `tools/png_to_rgb565.py` - regenerates the asset from a PNG
 - `src/lcd.c` / `lcd.h` - NV3030B init (vendor verbatim) + 240x284 geometry
   + drawing API + `LCD_Reinit`
 - `src/touch.c` / `touch.h` - CST816D over hardware I2C1

@@ -28,6 +28,7 @@
 #include "interface.h"
 #include "touch.h"
 #include "lcd_font_1608.h"
+#include "asset_test1.h"
 
 /* ---- on-board LEDs (LD1 green PC7, LD2 blue PB7, LD3 red PG2, high
  * active) - driven through the board layer ---- */
@@ -447,6 +448,78 @@ static const char *mode_name(uint8_t m)
     return (m == LCD_BUS_SOFT) ? "SOFT (bit-banged)" : "HW (SPI1)";
 }
 
+/* Cold-boot panel bring-up, ported from the ch32v307 reference.
+ *
+ * How long a cold-booted panel needs before it accepts commands varies
+ * run to run and cannot be measured (the module is write-only by
+ * design). Rather than sleeping or counting retries, this fills the
+ * screen with a tiled asset: the drawing IS the wait, and it doubles as
+ * the "the panel came up" test - the moment the artwork appears, the
+ * panel is live. Each cycle interleaves a fill with an LCD_Reinit(), so
+ * every init gets a chance; a late-starting panel catches one of them.
+ *
+ * The final fill is deliberate: it happens after the last Reinit, so the
+ * image left on screen was sent with the most recent init in effect. */
+#define LCD_BRINGUP_PASSES  3u
+#define BRINGUP_TILE_GAP    4    /* gap between tiles, px (keeps a border) */
+
+/* Fill y0..y1 with the 64x64 asset tiled on a gap-spaced grid, centred.
+ * Each tile is whole, so the panel's rounded corners never clip one. */
+static void bringup_fill_range(uint16_t y0, uint16_t y1)
+{
+    int span_h = (int)y1 - (int)y0;
+    int cols, rows, used_w, used_h, x_off, y_off, r, c;
+
+    if ((span_h < ASSET_TEST1_H) || ((int)LCD_W() < ASSET_TEST1_W))
+    {
+        return;                          /* no room for even one tile */
+    }
+
+    cols = ((int)LCD_W() - BRINGUP_TILE_GAP) / (ASSET_TEST1_W + BRINGUP_TILE_GAP);
+    rows = (span_h      - BRINGUP_TILE_GAP) / (ASSET_TEST1_H + BRINGUP_TILE_GAP);
+    if ((cols <= 0) || (rows <= 0))
+    {
+        return;
+    }
+
+    used_w = cols * ASSET_TEST1_W + (cols - 1) * BRINGUP_TILE_GAP;
+    used_h = rows * ASSET_TEST1_H + (rows - 1) * BRINGUP_TILE_GAP;
+    x_off  = ((int)LCD_W() - used_w) / 2;
+    y_off  = (int)y0 + (span_h - used_h) / 2;
+
+    for (r = 0; r < rows; r++)
+    {
+        for (c = 0; c < cols; c++)
+        {
+            LCD_CopyBuffer((uint16_t)(x_off + c * (ASSET_TEST1_W + BRINGUP_TILE_GAP)),
+                           (uint16_t)(y_off + r * (ASSET_TEST1_H + BRINGUP_TILE_GAP)),
+                           (uint16_t)ASSET_TEST1_W, (uint16_t)ASSET_TEST1_H,
+                           asset_test1);
+        }
+    }
+}
+
+static void panel_bringup(void)
+{
+    uint32_t pass;
+
+    LCD_Clear();
+
+    for (pass = 0; pass < LCD_BRINGUP_PASSES; pass++)
+    {
+        printf("[LCD] bring-up %lu/%lu: draw\r\n",
+               (unsigned long)(pass + 1U), (unsigned long)LCD_BRINGUP_PASSES);
+        bringup_fill_range(INFO_TOP, anim_h());
+
+        printf("[LCD] bring-up: Reinit\r\n");
+        LCD_Reinit();
+    }
+
+    /* Last fill with the most recent init in effect. */
+    bringup_fill_range(INFO_TOP, anim_h());
+    printf("[LCD] bring-up: done\r\n");
+}
+
 /* One full bring-up + pattern pass on the currently selected bus mode. */
 static void bus_pass(uint8_t mode, const char *title)
 {
@@ -459,6 +532,10 @@ static void bus_pass(uint8_t mode, const char *title)
 
     printf("[LCD] SCK = %s\r\n", mhz_text(QSPI_KHz()));
 
+    /* The cold-boot wait: fill + reinit cycles instead of a delay. */
+    panel_bringup();
+
+    LCD_Reinit();         /* re-frame the panel */
     banner_page("NV3030B", mode_name(mode), LCD_BLACK, LCD_CYAN, 3000);
 
     printf("[LCD] running patterns on %s @ %s\r\n",
@@ -484,6 +561,9 @@ int main(void)
     printf("NV3030B 1.83\" 240x284 (wrapped-command SPI, MADCTL 0x08):\r\n");
     printf("CS=PA4 SCK=PA5 MOSI=PA7 (MISO not connected - write-only)\r\n");
     printf("loop: SOFT (bit-bang) <-> HW (SPI1), same 3 wires\r\n");
+    printf("init: %s\r\n", (LCD_INIT_ENABLE_BLOCK != 0U)
+                            ? "vendor SPI sequence + QSPI enable block"
+                            : "vendor SPI sequence only (reference-exact)");
     printf("TOUCH: CST816D I2C1 SCL=PB8 SDA=PB9\r\n");
 
     Touch_Init();
