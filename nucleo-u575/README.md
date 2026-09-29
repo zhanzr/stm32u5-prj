@@ -29,6 +29,7 @@ the console.
 | `bare/coremark_160m` | CoreMark 1.0.1, 10,000 iterations, GCC / armclang / starm-clang, `-Ofast`-class flags |
 | `bare/st7789s_md120_240x240_ft6336` | **ST7789S 1.2" 240x240** LCD (**TK012F6** module, 3-wire 9-bit serial, no D/C pin) via **HW SPI1** + **FT6336** capacitive touch over **HW I2C1**; pattern set, FPS counter, touch printout |
 | `bare/nv3030b_md183_240x284_cst816d` | **NV3030B 1.83" 240x284** LCM (**TK018F3716** module, wrapped-command SPI: CS frame with `02 00 <cmd> 00` header, vendor-verbatim registers) via **HW SPI1** (CS=PA4 SCK=PA5 MOSI=PA7, write-only) + **CST816D** touch over **HW I2C1**; SOFT/HW bus passes, pattern set, FPS counter, touch printout (ported from the ch32v307 reference; OCTOSPI path dropped - HAL transmit was byte-at-a-time, ~8 M CPU ops per fill) |
+| `bare/co5300_md196_368x448_chsc6417` | **CO5300 1.96" 368x448** LCM (**TK0196M106** module, same wrapped-command SPI bus) via **HW SPI1** (CS=PA4 SCK=PA5 MOSI=PA7, write-only; brightness over SPI 51h) + **CHSC6417** touch over **HW I2C1** (addr 0x2E, data reg 0x00); SOFT/HW bus passes, asset bring-up, pattern set, FPS counter (vendor: TK499 single-lane + ESP32 QSPI examples) |
 
 All projects share the board support in `board/` (160 MHz clock from the MSI,
 PC7/PB7/PG2 LEDs, PC13 button, USART1 console, newlib stubs, ST HAL wiring)
