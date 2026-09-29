@@ -28,6 +28,7 @@ the console.
 | `bare/dhry_160m`     | Dhrystone 2.1, 10,000,000 runs, GCC or armclang, `-Ofast -ffp-contract=fast -funroll-loops` |
 | `bare/coremark_160m` | CoreMark 1.0.1, 10,000 iterations, GCC / armclang / starm-clang, `-Ofast`-class flags |
 | `bare/st7789s_md120_240x240_ft6336` | **ST7789S 1.2" 240x240** LCD (**TK012F6** module, 3-wire 9-bit serial, no D/C pin) via **HW SPI1** + **FT6336** capacitive touch over **HW I2C1**; pattern set, FPS counter, touch printout |
+| `bare/qspi_lcm_touch` | **NV3030B 1.83" 240x284** LCM (**TK018F3716** module, wrapped-command QSPI: inst+addr 1-line, data 1/2/4-line, looped quad→dual→single) via **HW OCTOSPI1** (NCS=PA2 CLK=PB10 IO0=PE12 IO1=PB0 IO2=PE14 IO3=PE15) + **CST816D** touch over **HW I2C1**; pattern set, FPS counter, touch printout (ported from the ch32v307 reference) |
 
 All projects share the board support in `board/` (160 MHz clock from the MSI,
 PC7/PB7/PG2 LEDs, PC13 button, USART1 console, newlib stubs, ST HAL wiring)
